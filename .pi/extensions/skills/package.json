@@ -1,0 +1,8 @@
+{
+  "name": "pi-kit-skill-view",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "minisearch": "^7.2.0"
+  }
+}

@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.py[cod]
+
+# Build outputs
+dist/
+build/
+out/
+target/
+*.egg-info/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Caches & tooling
+.cache/
+coverage/
+.nyc_output/
+.eslintcache
+*.tsbuildinfo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Package manager state
+.raisely/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# AI tooling (local agent state)
+.pi/extensions/skills/node_modules/
