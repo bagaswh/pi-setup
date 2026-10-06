@@ -1,0 +1,14 @@
+{
+  "$comment": "Standalone SSH tool backend for Aide. This is not Gondolin. Copy to .pi/ssh.json, set host, then start with bin/aide (sets PI_AIDE_SSH=1 and PI_AIDE_SSH_HOST). Leave identityFile empty to scan ~/.ssh keys. Empty host with SSH on fails the tools. This does not copy files. Share the tree with NFS. Do not put passwords or private keys in this file.",
+  "enabled": false,
+  "host": "example-host",
+  "user": "ubuntu",
+  "port": 22,
+  "identityFile": "",
+  "remoteWorkspace": "~/workspace",
+  "localWorkspace": "",
+  "strictHostKeyChecking": "accept-new",
+  "knownHostsFile": "~/.ssh/known_hosts",
+  "connectTimeout": 10,
+  "mux": true
+}

@@ -1,0 +1,8 @@
+{
+  "name": "pi-kit-ssh",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test lib.test.ts exec.test.ts mux.test.ts shell-state.test.ts ops.test.ts sync-skills.test.ts bg.test.ts"
+  }
+}

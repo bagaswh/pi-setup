@@ -55,4 +55,6 @@ desktop.ini
 *~
 
 # AI tooling (local agent state)
+.pi/context-compress.json
+.pi/ssh.json
 .pi/extensions/skills/node_modules/

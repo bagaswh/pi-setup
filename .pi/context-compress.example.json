@@ -1,0 +1,24 @@
+{
+  "methodOrder": ["snap"],
+  "fallback": "pi-default",
+  "serialize": {
+    "tokenEstimate": "chars/4",
+    "stubChars": 200,
+    "thinking": [{ "do": "drop" }],
+    "toolResult": [
+      { "when": "error", "upTo": 300, "do": "full" },
+      { "when": "error", "do": "errorStub" },
+      { "upTo": 500, "do": "full" },
+      { "upTo": 5000, "do": "truncate" },
+      { "do": "summarize" }
+    ],
+    "toolCall": [{ "upTo": 200, "do": "full" }, { "do": "summarize" }],
+    "userMessage": [{ "upTo": 2000, "do": "full" }, { "do": "truncate" }],
+    "modelResponse": [{ "do": "full" }],
+    "perTool": { "write": { "toolCall": [{ "do": "summarize" }] } }
+  },
+  "originals": { "enabled": true, "actions": ["drop", "truncate", "summarize", "errorStub"], "retention": "session" },
+  "summarizerModelConfig": { "model": "azure-foundry-ai-agents-cus/gpt-6-luna", "maxOutputTokens": 400, "concurrency": 2, "minAgeTokens": 30000, "waitMs": 15000 },
+  "snap": { "shape": "auto", "maxFrames": 64, "maxBytes": 3000000 },
+  "text": { "maxChars": 120000 }
+}
