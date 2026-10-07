@@ -1711,3 +1711,27 @@ export function editSkillFile(
     content: applied.content,
   };
 }
+
+/** Project copy registers. A global symlink to that same file does not.
+ *  jiti keeps import.meta.url as the imported path, so the global symlink
+ *  and the project file are different strings. realpath tells them apart.
+ *  A different project file also wins. Each call reads the paths again.
+ *  The factory uses process.cwd() because ExtensionAPI does not pass cwd.
+ *  `pi` loads extensions with that same directory.
+ */
+export function shouldLoadSkills(
+  extensionFile: string,
+  cwd: string,
+  realpath: (file: string) => string = fs.realpathSync,
+): boolean {
+  const project = path.resolve(cwd, ".pi", "extensions", "skills", "index.ts");
+  if (!fs.existsSync(project)) return true;
+  const loaded = path.resolve(extensionFile);
+  if (loaded === project) return true;
+  try {
+    if (realpath(loaded) === realpath(project)) return false;
+  } catch {
+    return false;
+  }
+  return false;
+}

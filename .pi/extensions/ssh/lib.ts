@@ -753,19 +753,29 @@ export function repoRootFromSshExtensionDir(extensionDir: string): string {
 /**
  * Register only when Aide set PI_AIDE_SSH=1 and this file is the copy
  * that should load. A project file at `<cwd>/.pi/extensions/ssh/index.ts`
- * wins over the global copy. Decided on each call so /reload cannot
- * stick a process-wide skip. Does not read ~/.pi/agent/ssh.json.
+ * wins over the global copy, including when the global entry is a
+ * symlink to that same file (jiti does not realpath import.meta.url).
+ * Decided on each call so /reload cannot stick a process-wide skip.
+ * Does not read ~/.pi/agent/ssh.json.
  */
 export function shouldRegisterSsh(
   extensionFile: string,
   cwd: string,
   env: EnvMap,
   exists: (file: string) => boolean = fs.existsSync,
+  realpath: (file: string) => string = fs.realpathSync,
 ): boolean {
   if (!sshWasRequested(env)) return false;
   const project = path.resolve(cwd, ".pi", "extensions", "ssh", "index.ts");
-  if (exists(project) && path.resolve(extensionFile) !== project) return false;
-  return true;
+  if (!exists(project)) return true;
+  const loaded = path.resolve(extensionFile);
+  if (loaded === project) return true;
+  try {
+    if (realpath(loaded) === realpath(project)) return false;
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 export function sshJsonPath(repoRoot: string): string {

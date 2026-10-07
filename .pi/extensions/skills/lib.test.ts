@@ -39,6 +39,7 @@ import {
   formatSkillTree,
   listDirectory,
   parseAvailableSkillsBlock,
+  shouldLoadSkills,
   parseLoadFull,
   SKILL_TOOLS_PROMPT_MARKER,
   SKILL_VIEW_READ_HINT,
@@ -568,4 +569,21 @@ test("catalog tree merges directories and errors on the same skill path", () => 
   const trimmed = directoryBlurb(`---\nname: n\n---\n\n${long}\n`);
   assert.equal(trimmed.trimmed, true);
   assert.equal(trimmed.text.length, 200);
+});
+
+test("global symlink yields to the project skills copy", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skills-load-"));
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), "skills-empty-"));
+  const project = path.join(root, ".pi", "extensions", "skills", "index.ts");
+  fs.mkdirSync(path.dirname(project), { recursive: true });
+  fs.writeFileSync(project, "export {}\n");
+  try {
+    const globalLink = "/home/user/.pi/agent/extensions/skills/index.ts";
+    assert.equal(shouldLoadSkills(project, root, () => project), true);
+    assert.equal(shouldLoadSkills(globalLink, root, () => project), false);
+    assert.equal(shouldLoadSkills(globalLink, empty, () => project), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(empty, { recursive: true, force: true });
+  }
 });

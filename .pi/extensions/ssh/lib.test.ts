@@ -779,6 +779,15 @@ test("shouldRegisterSsh requires PI_AIDE_SSH=1 and yields to a project copy", ()
     shouldRegisterSsh("/global/index.ts", "/other", {}, () => false),
     false,
   );
+  const globalLink = "/home/user/.pi/agent/extensions/ssh/index.ts";
+  assert.equal(
+    shouldRegisterSsh(globalLink, "/proj", { PI_AIDE_SSH: "1" }, exists, () => project),
+    false,
+  );
+  assert.equal(
+    shouldRegisterSsh(project, "/proj", { PI_AIDE_SSH: "1" }, exists, () => project),
+    true,
+  );
 });
 
 test("index.ts wraps fail-closed and does not fall back to host-direct tools", () => {

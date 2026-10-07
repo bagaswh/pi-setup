@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { test } from "node:test";
 
 import { loadKnowledgeBaseConfig, loadLayeredKnowledgeBaseConfig } from "./config.ts";
+import { shouldLoadKnowledgeBase } from "./index.ts";
 
 const configPath = "/repo/.pi/kb.json";
 
@@ -192,4 +196,21 @@ test("project kb.json overrides the global file and resolves a relative root aga
     lookupQmdUpdateCommand: () => ({ ok: true, command: "" }),
   });
   assert.equal(got.kind === "ready" && got.config.writable === true && got.config.qmd.collections.join(",") === "runbooks" && got.config.openviking?.root === "/repo/local-notes", true);
+});
+
+test("global symlink yields to the project knowledge-base copy", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "kb-load-"));
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), "kb-empty-"));
+  const project = path.join(root, ".pi", "extensions", "knowledge-base", "index.ts");
+  fs.mkdirSync(path.dirname(project), { recursive: true });
+  fs.writeFileSync(project, "export {}\n");
+  try {
+    const globalLink = "/home/user/.pi/agent/extensions/knowledge-base/index.ts";
+    assert.equal(shouldLoadKnowledgeBase(project, root, () => project), true);
+    assert.equal(shouldLoadKnowledgeBase(globalLink, root, () => project), false);
+    assert.equal(shouldLoadKnowledgeBase(globalLink, empty, () => project), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(empty, { recursive: true, force: true });
+  }
 });

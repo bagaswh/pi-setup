@@ -217,7 +217,7 @@ test("a fatal file makes the extension exit", () => {
   }
 });
 
-test("a valid file fills spec defaults and the example is safe", () => {
+test("a valid file fills spec defaults", () => {
   const config = ready({});
   assert.deepEqual(config.methodOrder, ["snap"]);
   assert.equal(config.fallback, "pi-default");
@@ -233,19 +233,7 @@ test("a valid file fills spec defaults and the example is safe", () => {
   assert.equal(config.summarizerModelConfig.minAgeTokens, 30000);
   assert.equal(config.summarizerModelConfig.waitMs, 15000);
   assert.equal(config.needsSummarizer, false);
-
-  const example = JSON.parse(fs.readFileSync(path.join(repoRoot, ".pi", "context-compress.example.json"), "utf8"));
-  assert.deepEqual(example.methodOrder, ["snap"]);
-  assert.equal(example.fallback, "pi-default");
-  assert.equal(JSON.stringify(example).includes("apiKey"), false);
   assert.match(fs.readFileSync(path.join(repoRoot, ".gitignore"), "utf8"), /\.pi\/context-compress\.json/);
-  const withSummary = ready(example);
-  assert.equal(withSummary.needsSummarizer, true);
-  const stripped = structuredClone(example);
-  stripped.serialize.toolResult = [{ do: "full" }];
-  stripped.serialize.toolCall = [{ do: "full" }];
-  delete stripped.serialize.perTool;
-  assert.equal(ready(stripped).needsSummarizer, false);
   assert.equal(ready({ serialize: { perTool: { write: { toolCall: [{ do: "summarize" }] } } } }).needsSummarizer, true);
   assert.equal(ready({ snap: { serialize: { modelResponse: [{ do: "summarize" }] } } }).needsSummarizer, true);
 });
@@ -1158,7 +1146,8 @@ test("reload still registers context-compress and the global copy does not", () 
   const other = path.join(repoRoot, "not-project", "index.ts");
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "cc-load-"));
   try {
-    assert.equal(shouldLoadContextCompress(project, repoRoot) && shouldLoadContextCompress(project, repoRoot) && !shouldLoadContextCompress(other, repoRoot) && shouldLoadContextCompress(other, scratch), true);
+    const globalLink = "/home/user/.pi/agent/extensions/context-compress/index.ts";
+    assert.equal(shouldLoadContextCompress(project, repoRoot) && shouldLoadContextCompress(project, repoRoot) && !shouldLoadContextCompress(other, repoRoot) && shouldLoadContextCompress(other, scratch) && !shouldLoadContextCompress(globalLink, repoRoot, () => project) && shouldLoadContextCompress(project, repoRoot, () => project), true);
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
   }

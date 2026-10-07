@@ -30,10 +30,10 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { ExtensionAPI, Skill } from "@earendil-works/pi-coding-agent";
 import type { Model } from "@earendil-works/pi-ai";
-import { clampThinkingLevel } from "@earendil-works/pi-ai/compat";
 import { Type } from "typebox";
 
 import crypto from "node:crypto";
@@ -64,6 +64,7 @@ import {
   rewriteSkillsPrompt,
   skillId,
   skillRefFromDisk,
+  shouldLoadSkills,
   skillToolsActive,
   sliceLineWindow,
   splitLines,
@@ -198,6 +199,21 @@ function readScalarField(
   };
 }
 
+/** clampThinkingLevel(model, "off") without importing @earendil-works/pi-ai. */
+function reasoningEffortForOff(model: Model): string | undefined {
+  const order = ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
+  const available = model.reasoning
+    ? order.filter((level) => {
+        const mapped = model.thinkingLevelMap?.[level];
+        if (mapped === null) return false;
+        if (level === "xhigh" || level === "max") return mapped !== undefined;
+        return true;
+      })
+    : ["off"];
+  const level = available.includes("off") ? "off" : (available[0] ?? "off");
+  return level === "off" ? undefined : level;
+}
+
 function resolveFinderModel(registry: {
   getAll(): Model[];
   hasConfiguredAuth(model: Model): boolean;
@@ -246,6 +262,7 @@ export function toFinderProviderMessages(messages: FinderMessage[]) {
 }
 
 export default function (pi: ExtensionAPI) {
+  if (!shouldLoadSkills(fileURLToPath(import.meta.url), process.cwd())) return;
   let catalog: SkillRef[] = [];
   let roots = defaultCatalogRoots();
   let tree: CatalogTree = buildCatalogTree([], roots);
@@ -1229,10 +1246,10 @@ export default function (pi: ExtensionAPI) {
           // internal ModelRuntime and not reachable from an extension.
           // complete() goes through the raw provider stream, which ignores the
           // `reasoning` option, so emulate streamSimple(reasoning: "off"):
-          // clamp the level (models that cannot disable thinking fall back to
-          // "minimal"), then forward the mapped effort to the raw stream.
-          const clamped = clampThinkingLevel(model, "off");
-          const reasoningEffort = clamped === "off" ? undefined : clamped;
+          // same walk as pi-ai clampThinkingLevel(model, "off"). Models that
+          // cannot disable thinking fall forward to the next supported level
+          // (usually "minimal"). This package does not depend on pi-ai.
+          const reasoningEffort = reasoningEffortForOff(model);
           const message = await ctx.modelRegistry
             .complete(
               model,

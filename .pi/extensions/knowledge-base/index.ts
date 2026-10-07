@@ -22,9 +22,26 @@ function agentDir(): string {
   return env ? path.resolve(env) : path.join(os.homedir(), ".pi", "agent");
 }
 
-function shouldLoadKnowledgeBase(extensionFile: string, cwd: string): boolean {
+/** Project copy registers. A global symlink to that same file does not.
+ *  jiti keeps import.meta.url as the imported path, so the global symlink
+ *  and the project file are different strings. realpath tells them apart.
+ *  A different project file also wins. Each call reads the paths again.
+ */
+export function shouldLoadKnowledgeBase(
+  extensionFile: string,
+  cwd: string,
+  realpath: (file: string) => string = fs.realpathSync,
+): boolean {
   const project = path.resolve(cwd, ".pi", "extensions", "knowledge-base", "index.ts");
-  return !(fs.existsSync(project) && path.resolve(extensionFile) !== project);
+  if (!fs.existsSync(project)) return true;
+  const loaded = path.resolve(extensionFile);
+  if (loaded === project) return true;
+  try {
+    if (realpath(loaded) === realpath(project)) return false;
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 export default function registerKnowledgeBaseExtension(pi: ExtensionAPI) {
