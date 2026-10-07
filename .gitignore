@@ -62,3 +62,7 @@ desktop.ini
 # Go launcher build output
 src/launcher/pil
 .pi/durable-workflows/
+
+# Local pi state (untracked, reinstall skills from skills-lock.json)
+.pi/tasks/
+.pi/skills/
