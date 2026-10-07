@@ -1,0 +1,7 @@
+{
+  "backend": "qmd",
+  "writable": false,
+  "qmd": {
+    "collections": ["runbooks"]
+  }
+}
