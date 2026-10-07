@@ -32,6 +32,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 import type { ExtensionAPI, Skill } from "@earendil-works/pi-coding-agent";
+import type { Model } from "@earendil-works/pi-ai";
+import { clampThinkingLevel } from "@earendil-works/pi-ai/compat";
 import { Type } from "typebox";
 
 import crypto from "node:crypto";
@@ -197,11 +199,9 @@ function readScalarField(
 }
 
 function resolveFinderModel(registry: {
-  getAll(): Array<{ provider: string; id: string }>;
-  hasConfiguredAuth(model: { provider: string; id: string }): boolean;
-}):
-  | { ok: true; model: { provider: string; id: string } }
-  | { ok: false; error: string } {
+  getAll(): Model[];
+  hasConfiguredAuth(model: Model): boolean;
+}): { ok: true; model: Model } | { ok: false; error: string } {
   const ref = process.env[FINDER_MODEL_ENV]?.trim();
   if (!ref) return { ok: false, error: `${FINDER_MODEL_ENV} is unset.` };
   const model = matchModelReference(ref, registry.getAll());
@@ -1208,7 +1208,7 @@ export default function (pi: ExtensionAPI) {
       ),
     }),
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-      let model: { provider: string; id: string } | undefined;
+      let model: Model | undefined;
       const result = await runSkillFind({
         task: params.task,
         contextId: params.contextId,
@@ -1224,19 +1224,25 @@ export default function (pi: ExtensionAPI) {
           return { ok: true };
         },
         complete: async (input) => {
-          // streamSimple honors `reasoning`. complete() goes through stream(),
-          // which does not, so a finder call would inherit provider thinking.
+          if (!model) return { ok: false, error: "The finder model was not resolved." };
+          // ctx.modelRegistry exposes complete() only; streamSimple() is on the
+          // internal ModelRuntime and not reachable from an extension.
+          // complete() goes through the raw provider stream, which ignores the
+          // `reasoning` option, so emulate streamSimple(reasoning: "off"):
+          // clamp the level (models that cannot disable thinking fall back to
+          // "minimal"), then forward the mapped effort to the raw stream.
+          const clamped = clampThinkingLevel(model, "off");
+          const reasoningEffort = clamped === "off" ? undefined : clamped;
           const message = await ctx.modelRegistry
-            .streamSimple(
+            .complete(
               model,
               {
                 systemPrompt: input.systemPrompt,
                 messages: toFinderProviderMessages(input.messages),
                 tools: finderTools,
               },
-              { reasoning: "off", signal },
-            )
-            .result();
+              { reasoningEffort, signal },
+            );
           return completionFromAssistant(message);
         },
       });
