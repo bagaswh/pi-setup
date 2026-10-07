@@ -1,0 +1,8 @@
+{
+  "name": "pi-kit-durable-workflows",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test graph.test.ts log.test.ts fold.test.ts lease.test.ts store.test.ts tool.test.ts"
+  }
+}

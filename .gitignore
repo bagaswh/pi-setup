@@ -58,3 +58,7 @@ desktop.ini
 .pi/context-compress.json
 .pi/ssh.json
 .pi/extensions/skills/node_modules/
+
+# Go launcher build output
+src/launcher/pil
+.pi/durable-workflows/
